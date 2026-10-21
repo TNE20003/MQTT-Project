@@ -17,11 +17,11 @@ print("I am alive")
 while True:
     try:
         _payload = randint(0,10)
-        resp = client.publish(topic='103218929/TEST_publish', payload=str(_payload), qos=0)
+        resp = client.publish(topic="{103218929}/TEST_publish", payload=str(_payload), qos=0)
         # resp.wait_for_publish(2)
         # if resp.is_published():
         #     print(f"Published successfully {_payload}")
-        # sleep(1)
+        sleep(1)
 
     except KeyboardInterrupt:
         client.disconnect()
