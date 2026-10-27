@@ -33,5 +33,3 @@ while True:
         client.loop_stop()
         break
 # client.loop_stop()
-
-
