@@ -1,7 +1,7 @@
 from random import randrange
 import math
 from threading import Thread, Lock, Event
-from time import monotonic, sleep
+from time import monotonic
 from enum import Enum
 
 class State(Enum):
@@ -9,16 +9,24 @@ class State(Enum):
     RUNNING = 1
     SHUTDOWN = 2
 
-class Sensor():
-    def __init__(self, sensor_name:str, sensor_type:str, running_frequency_hz:float, sigma: int = None, mu:int = None):
-        super().__init__()
+class SensorInterfaceType(Enum):
+    GPIO = 1
+    UART = 2
+    CAN = 3
+    I2C = 4
+    SPI = 5
+    ANALOG = 6
+    DIGITAL = 7
+
+class Sensor:
+    def __init__(self, sensor_name:str, interface:SensorInterfaceType, frequency_hz:float, sigma: int = None, mu:int = None):
         self.sensor_name =sensor_name
-        self.sensor_type = sensor_type
+        self.sensor_interface = interface
 
         self.sigma = randrange(1, int(monotonic()+1000), 1) if sigma is None else sigma
         self.mu = randrange(self.sigma, self.sigma+1000000, 1) if mu is None else mu
 
-        running_period = 1/running_frequency_hz
+        running_period = 1/frequency_hz
         self.read_value_lock = Lock()
         self.shutdown_event = Event()
 
@@ -43,12 +51,12 @@ class Sensor():
             else:
                 print(f"Shutting down sensor: {self.sensor_name}")
 
-    def shutdown_sensor(self):
+    def shutdown(self):
          self.shutdown_event.set()
          self.state = State.SHUTDOWN
          self.value_generator_thread.join()
 
-    def initialise_sensor(self):
+    def initialise(self):
         self.time_t = monotonic()
         self.value_generator_thread.start()
         self.state = State.RUNNING
@@ -61,7 +69,15 @@ class Sensor():
 
     @property
     def type(self):
-        return self.sensor_type
+        return self.sensor_interface
+
+    @property
+    def name(self):
+        return self.sensor_name
+
+    @property
+    def interface(self):
+        return self.sensor_interface
 
     # @property
     # def state(self):
