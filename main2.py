@@ -1,5 +1,6 @@
 from Robot.Sensors import Sensor, SensorInterfaceType
 from Robot.Robot import Robot # My best work yet...
+from Robot.Controller import Controller
 
 # Configure the robot to have a bucnh of sensors
 light_sensor = Sensor("light_sensor", SensorInterfaceType.I2C, frequency_hz=15)
@@ -11,8 +12,12 @@ humidity_sensor = Sensor("humidity_sensor", SensorInterfaceType.ANALOG, frequenc
 puck_robot = Robot()
 puck_robot.attach_sensor([light_sensor, temperature_sensor, distance_sensor, pressure_sensor, humidity_sensor])
 
+controller = Controller(move_target=(1,0))
+
 try:
     puck_robot.initialise()
+    controller.run()
+
     puck_robot.shutdown_event.wait()
 except KeyboardInterrupt:
     pass
