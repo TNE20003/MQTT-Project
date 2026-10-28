@@ -3,7 +3,8 @@ from queue import Empty, Queue
 from threading import Lock
 from time import monotonic
 
-class MQTTServer():
+
+class MQTTServer:
     def __init__(self, client_id):
         self.mqtt_broker = 'rule28.i4t.swin.edu.au'
         self.client = mqtt.Client(client_id=client_id, clean_session=True)
