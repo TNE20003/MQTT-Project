@@ -19,7 +19,7 @@ class Robot:
     def __init__(self, id:str = None):
         if id is None:
             rand_wrd = RandomWords()
-            self.robot_id = " ".join([rand_wrd.get_random_word(), rand_wrd.get_random_word()])
+            self.robot_id = " ".join([rand_wrd.get_random_word(), rand_wrd.get_random_word()]).lstrip()
         else:
             self.robot_id = id
 
@@ -37,7 +37,7 @@ class Robot:
             self.sensor_set.add(_sensor)
 
     def initialise(self):
-        print(f"Starting Robot: {self.robot_id}")
+        print(f"Starting Robot : {self.robot_id}")
         self.init_sensors()
         self.state = State.STARTING_UP
 

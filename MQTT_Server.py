@@ -23,6 +23,22 @@ class MQTTServer():
     def publish(self, topic, payload, qos=0):
         self.client.publish(topic="{103218929}/"+f"{topic}", payload=str(payload), qos=qos)
 
+    def subscribe(self, topic, qos=0):
+        full_topic = "{103218929}/" + topic
+        result, _ = self.client.subscribe(full_topic, qos=qos)
+        if result != mqtt.MQTT_ERR_SUCCESS:
+            raise RuntimeError(f"Could not subscribe to topic {full_topic!r}")
+
+    def read_message(self, timeout=None):
+        if timeout is not None and timeout < 0:
+            raise ValueError("timeout cannot be negative")
+
+        try:
+            topic, payload = self._messages.get(timeout=timeout)
+        except Empty:
+            raise TimeoutError("No MQTT message received before the timeout") from None
+        return topic, payload.decode("utf-8")
+
     def read(self, topic, timeout=5.0):
         if timeout <= 0:
             raise ValueError("timeout must be greater than zero")
