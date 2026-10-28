@@ -10,10 +10,9 @@ humidity_sensor = Sensor("humidity_sensor", SensorInterfaceType.ANALOG, frequenc
 
 puck_robot = Robot()
 puck_robot.attach_sensor([light_sensor, temperature_sensor, distance_sensor, pressure_sensor, humidity_sensor])
-puck_robot.initialise()
 
 try:
-    print("Robot is listening for Move commands and sensor queries. Press Ctrl+C to stop.")
+    puck_robot.initialise()
     puck_robot.shutdown_event.wait()
 except KeyboardInterrupt:
     pass

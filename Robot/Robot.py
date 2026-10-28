@@ -86,13 +86,20 @@ class Robot:
 
     def handle_sensor_command(self, command: str):
         command_parts = command.strip().split(maxsplit=1)
-        if len(command_parts) == 2 and command_parts[0].lower() == "query":
-            sensor_name = command_parts[1]
-            sensor = self.get_sensor_by_name(sensor_name)
-            if sensor is None:
-                response = {"error": f"Unknown sensor: {sensor_name}"}
+        if len(command_parts) == 2 and command_parts[0].lower() == "get_sensor":
+            sensor_selection = command_parts[1]
+
+            if sensor_selection.lower() == "all":
+                print("Listing ALL")
+                response = {"All Sensors": " ".join(self.get_all_sensor_names).lstrip()}
+
             else:
-                response = {"sensor": sensor_name, "value": sensor.read_sensor_value()}
+                sensor = self.get_sensor_by_name(sensor_selection)
+                if sensor is None:
+                    response = {"error": f"Unknown sensor: {sensor_selection}"}
+                else:
+                    response = {"sensor": sensor_selection, "value": sensor.read_sensor_value()}
+
         else:
             response = {"error": "Unsupported command. Use: query <sensor_name>"}
         self.MQTT_service.publish(PUBLICATIONS.RESPONSE_TOPIC.value, json.dumps(response))
@@ -144,3 +151,7 @@ class Robot:
     @property
     def get_pos(self):
         return self.pos
+
+    @property
+    def get_all_sensor_names(self):
+        return [sensor.name for sensor in self.sensor_set]

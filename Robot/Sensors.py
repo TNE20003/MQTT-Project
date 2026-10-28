@@ -44,12 +44,12 @@ class Sensor:
             pub_topic = Pub_topic+"/"+self.sensor_name
 
             while not shutdown_sensor_event.is_set():
-                if monotonic()%running_period < 0.05:
-                    with self.read_value_lock:
-                        if self.time_t<0:
-                            raise ValueError(f"Time on sensor {self.sensor_name} not initialised correctly")
-                        self.sensor_value_at_t = _generate_value(monotonic())
-                        MQTT_Service.publish(topic=pub_topic, payload=self.sensor_value_at_t)
+                with self.read_value_lock:
+                    if self.time_t<0:
+                        raise ValueError(f"Time on sensor {self.sensor_name} not initialised correctly")
+                    self.sensor_value_at_t = _generate_value(monotonic())
+                MQTT_Service.publish(topic=pub_topic, payload=self.sensor_value_at_t)
+                shutdown_sensor_event.wait(running_period)
             else:
                 print(f"Shutting down sensor: {self.sensor_name}")
 
