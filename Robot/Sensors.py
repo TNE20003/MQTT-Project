@@ -3,6 +3,7 @@ import math
 from threading import Thread, Lock, Event
 from time import monotonic
 from enum import Enum
+from IO.MQTT_Server import MQTTServer
 
 class State(Enum):
     UNINITIALISED = 0
@@ -26,28 +27,29 @@ class Sensor:
         self.sigma = randrange(1, int(monotonic()+1000), 1) if sigma is None else sigma
         self.mu = randrange(self.sigma, self.sigma+1000000, 1) if mu is None else mu
 
-        running_period = 1/frequency_hz
+        self.running_period = 1/frequency_hz
         self.read_value_lock = Lock()
         self.shutdown_event = Event()
 
-        self.value_generator_thread = Thread(target=self._value_generator, args=(running_period, self.shutdown_event))
         self.time_t:float = 0
         self.sensor_value_at_t:float = 0.0
 
         self.state = self.state = State.UNINITIALISED
 
-    def _value_generator(self, running_period:float, shutdown_sensor_event:Event):
+    def _value_generator(self, running_period:float, shutdown_sensor_event:Event, MQTT_Service:MQTTServer, Pub_topic:str):
             def _generate_value(time:float):
                 return (1 / (self.sigma * math.sqrt(2 * math.pi))) * math.exp(
                     -0.5 * ((time - self.mu) / self.sigma) ** 2) * running_period**2 + randrange(0,10)
 
-            while not shutdown_sensor_event.is_set():
-                if monotonic()%running_period < 0.05:
-                    with self.read_value_lock:
-                        if self.time_t<0:
-                            raise ValueError(f"Time on sensor {self.sensor_name} not initialised correctly")
-                        self.sensor_value_at_t = _generate_value(monotonic())
+            pub_topic = Pub_topic+"/"+self.sensor_name
 
+            while not shutdown_sensor_event.is_set():
+                with self.read_value_lock:
+                    if self.time_t<0:
+                        raise ValueError(f"Time on sensor {self.sensor_name} not initialised correctly")
+                    self.sensor_value_at_t = _generate_value(monotonic())
+                MQTT_Service.publish(topic=pub_topic, payload=self.sensor_value_at_t)
+                shutdown_sensor_event.wait(running_period)
             else:
                 print(f"Shutting down sensor: {self.sensor_name}")
 
@@ -56,8 +58,10 @@ class Sensor:
          self.state = State.SHUTDOWN
          self.value_generator_thread.join()
 
-    def initialise(self):
+    def initialise(self, MQTT_service, pub_topic:str):
         self.time_t = monotonic()
+        self.value_generator_thread = Thread(target=self._value_generator, args=(self.running_period, self.shutdown_event, MQTT_service, pub_topic,))
+
         self.value_generator_thread.start()
         self.state = State.RUNNING
         print(f"Initialising Sensor: {self.sensor_name}")

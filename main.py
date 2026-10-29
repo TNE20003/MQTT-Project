@@ -1,35 +1,26 @@
-import paho.mqtt.client as mqtt
+from Robot.Sensors import Sensor, SensorInterfaceType
+from Robot.Robot import Robot # My best work yet...
+from Robot.Controller import Controller
 
-from random import randint
-from time import sleep
+# Configure the robot to have a bucnh of sensors
+light_sensor = Sensor("light_sensor", SensorInterfaceType.I2C, frequency_hz=15)
+temperature_sensor = Sensor("temperature_sensor", SensorInterfaceType.SPI, frequency_hz=20)
+distance_sensor = Sensor("distance_sensor", SensorInterfaceType.GPIO, frequency_hz=5)
+pressure_sensor = Sensor("pressure_sensor", SensorInterfaceType.UART, frequency_hz=10)
+humidity_sensor = Sensor("humidity_sensor", SensorInterfaceType.ANALOG, frequency_hz=10)
 
-def on_connect(client, userdata, flags, rc, properties=None):
-    print("Python connection result:", rc)
+puck_robot = Robot()
+puck_robot.attach_sensor([light_sensor, temperature_sensor, distance_sensor, pressure_sensor, humidity_sensor])
 
-mqtt_broker = 'rule28.i4t.swin.edu.au'
-client = mqtt.Client(client_id="ABCDC123", clean_session=True)
-username_password = "{103218929}"
-client.username_pw_set(username_password,username_password)
-client.connect(mqtt_broker)
+controller = Controller(move_target=(1,0))
 
-client.loop_start()
-print("I am alive")
-while True:
-    try:
-        _payload = randint(0,10)
-        resp = client.publish(topic="{103218929}/TEST_publish", payload=str(_payload), qos=0)
-        # resp.wait_for_publish(2)
-        # if resp.is_published():
-        #     print(f"Published successfully {_payload}")
-        sleep(1)
+try:
+    puck_robot.initialise()
+    controller.run()
 
-    except KeyboardInterrupt:
-        client.disconnect()
-        client.loop_stop()
-        break
-
-    except RuntimeError:
-        client.disconnect()
-        client.loop_stop()
-        break
-# client.loop_stop()
+    puck_robot.shutdown_event.wait()
+except KeyboardInterrupt:
+    pass
+finally:
+    puck_robot.shutdown()
+# Basically move the robot around randomly based on the readings (Where it always travels in the direction of the most humid and lowest light)
