@@ -47,7 +47,6 @@ class Controller:
             self.sensor_names = names.split() if isinstance(names, str) else names
             break
 
-
         if "light_sensor" not in self.sensor_names:
             raise ValueError("The robot does not have a light_sensor attached")
 
@@ -72,11 +71,11 @@ class Controller:
             print(f"Ignoring invalid light reading: {payload}")
             return
 
-        if light_value < 5:
+        if light_value < 1:
             x, y = self.move_target
             command = f"MOVE TO {x},{y}"
             self.mqtt_server.publish(SUBSCRIPTIONS.CONTROLLER_MOVE_TOPIC.value, command)
-            print(f"Light value {light_value}: {command}")
+            # print(f"Light value {light_value}: {command}")
 
     def run(self):
         """
@@ -92,7 +91,7 @@ class Controller:
                 except UnicodeDecodeError:
                     print("Ignoring a message with invalid UTF-8 encoding")
                     continue
-                print(topic)
+                # print(topic)
                 self.handle_message(topic, payload)
         except KeyboardInterrupt:
             pass

@@ -91,7 +91,7 @@ class Robot:
             try:
                 topic, command = self.MQTT_service.read_message(timeout=0.2)
             except TimeoutError as te:
-                print(f"Unable to process read message: {te}")
+                # print(f"Unable to process read message: {te}")
                 continue
 
             if shutdown_event.is_set():

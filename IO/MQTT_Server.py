@@ -48,7 +48,7 @@ class MQTTServer:
             payload (str): The data to be shared
             qos (int, optional): The quality of service. For the sake of this project, QOS of 0 is predominatly used. Defaults to 0.
         """
-        self.client.publish(topic="{103218929}/"+f"{topic}", payload=str(payload), qos=qos)
+        return self.client.publish(topic="{103218929}/"+f"{topic}", payload=str(payload), qos=qos)
 
     def subscribe(self, topic:str, qos:int = 0):
         """
