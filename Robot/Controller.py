@@ -5,41 +5,48 @@ import math
 from time import monotonic
 
 from IO.MQTT_Server import MQTTServer
-from IO.MQTT_Topics import SUBSCRIPTIONS, PUBLICATIONS
+from IO.MQTT_Topics import SUBSCRIPTIONS, PUBLICATIONS, COMMMANDS
 
 
 class Controller:
     def __init__(self, move_target=(1, 0)):
+        """
+        This class is in charge of sending commands to the robot in the case where certain conditions are met
+        """
         self.mqtt_server = MQTTServer(client_id=f"Controller_node")
         self.move_target = move_target
         self.sensor_names = []
         self.light_topic = None
 
     def initialise(self, timeout=5.0):
+        """
+        Initialises the controller and makes all relevant subscriptions and publications
+
+        Args:
+            timeout (float, optional): The timeout period for reading values from subscribed topics. Defaults to 5.0.
+
+        """
         self.mqtt_server.connect()
         # Subscribe before sending the request so the reply is not missed.
         self.mqtt_server.subscribe(PUBLICATIONS.RESPONSE_TOPIC.value)
-        self.mqtt_server.publish(SUBSCRIPTIONS.CONTROLLER_COMMAND_TOPIC.value, "get_sensor all")
-        deadline = monotonic() + timeout
+        self.mqtt_server.publish(SUBSCRIPTIONS.CONTROLLER_COMMAND_TOPIC.value, COMMMANDS.GET_ALL_SENSORS.value)
         while True:
-            # remaining = deadline - monotonic()
             topic, payload = self.mqtt_server.read_message(timeout=timeout)
             if not topic.endswith('/' + PUBLICATIONS.RESPONSE_TOPIC.value):
                 continue
             try:
                 response = json.loads(payload)
             except json.JSONDecodeError:
+                print(f"Jason Praising failed for response: {response}")
                 continue
 
-            if "All Sensors" not in response:
+            if not isinstance(response, dict) or "All Sensors" not in response:
                 continue
+
             names = response["All Sensors"]
-            # Accept the robot's space-separated string or a JSON list.
-            names = names.split()
-            self.sensor_names = names
+            self.sensor_names = names.split() if isinstance(names, str) else names
             break
 
-        print(f"Attached sensors: {self.sensor_names}")
 
         if "light_sensor" not in self.sensor_names:
             raise ValueError("The robot does not have a light_sensor attached")
@@ -48,13 +55,21 @@ class Controller:
         print(f"subscribing to {self.light_topic}")
         self.mqtt_server.subscribe(self.light_topic)
 
-    def handle_message(self, topic, payload):
+    def handle_message(self, topic:str, payload:str):
+        """
+        The callback function used to handle incoming data. This function decides what the control of the robot.
+
+        Args:
+            topic (str): The topic name that is to be handled
+            payload (str): The associated payload for that incoming topic
+        """
+
         if self.light_topic is None or not topic.endswith('/' + self.light_topic):
             return
         try:
             light_value = float(payload)
         except ValueError:
-            print(f"Ignoring invalid light reading: {payload!r}")
+            print(f"Ignoring invalid light reading: {payload}")
             return
 
         if light_value < 5:
@@ -64,6 +79,9 @@ class Controller:
             print(f"Light value {light_value}: {command}")
 
     def run(self):
+        """
+        Initialises and spins the controller
+        """
         try:
             self.initialise()
             while True:
@@ -80,7 +98,3 @@ class Controller:
             pass
         finally:
             self.mqtt_server.disconnect()
-
-
-# if __name__ == "__main__":
-#     Controller(move_target=(1, 0)).run()

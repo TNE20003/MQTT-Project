@@ -36,7 +36,7 @@ class Sensor:
 
         self.state = self.state = State.UNINITIALISED
 
-    def _value_generator(self, running_period:float, shutdown_sensor_event:Event, MQTT_Service, Pub_topic:str):
+    def _value_generator(self, running_period:float, shutdown_sensor_event:Event, MQTT_Service:MQTTServer, Pub_topic:str):
             def _generate_value(time:float):
                 return (1 / (self.sigma * math.sqrt(2 * math.pi))) * math.exp(
                     -0.5 * ((time - self.mu) / self.sigma) ** 2) * running_period**2 + randrange(0,10)

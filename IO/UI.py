@@ -7,16 +7,13 @@ from queue import Empty, Queue
 from threading import Thread
 from uuid import uuid4
 
-if __package__:
-    from .MQTT_Server import MQTTServer
-else:
-    from MQTT_Server import MQTTServer
+from .MQTT_Server import MQTTServer
 
 
 class MQTTUI:
     def __init__(self, root):
         self.root = root
-        self.server = MQTTServer(client_id=f"MQTT_UI_{uuid4().hex[:8]}")
+        self.server = MQTTServer(client_id=f"MQTT_UI")
         self.connected = False
         self.connection_results = Queue()
         self.connection_thread = None
