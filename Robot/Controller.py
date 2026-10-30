@@ -7,9 +7,9 @@ from time import monotonic
 from IO.MQTT_Server import MQTTServer
 from IO.MQTT_Topics import SUBSCRIPTIONS, PUBLICATIONS, COMMMANDS
 
-
+from random import randint
 class Controller:
-    def __init__(self, move_target=(1, 0)):
+    def __init__(self, move_target=(1, )):
         """
         This class is in charge of sending commands to the robot in the case where certain conditions are met
         """
@@ -70,10 +70,11 @@ class Controller:
         except ValueError:
             print(f"Ignoring invalid light reading: {payload}")
             return
-
+        
+        print(light_value<1)
         if light_value < 1:
             x, y = self.move_target
-            command = f"MOVE TO {x},{y}"
+            command = f"MOVE TO {x+randint(0,10)},{y+randint(0,10)}"
             self.mqtt_server.publish(SUBSCRIPTIONS.CONTROLLER_MOVE_TOPIC.value, command)
             # print(f"Light value {light_value}: {command}")
 
