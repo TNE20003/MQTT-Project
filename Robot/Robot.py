@@ -158,7 +158,13 @@ class Robot:
         """
         self.state = State.INITAILISING_SENSORS
         for _sensor in self.sensor_set:
+            _sensor.position_provider = self.sensor_position
             _sensor.initialise(self.MQTT_service, PUBLICATIONS.SENSOR_VALUE_PUB_TOPIC.value)
+
+    def sensor_position(self):
+        """Take a consistent position snapshot for simulated sensor readings."""
+        with self.thread_lock:
+            return tuple(self.pos)
 
     def get_sensor_by_name(self, name:str) -> Sensor|None:
         """

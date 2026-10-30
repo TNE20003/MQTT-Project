@@ -47,6 +47,10 @@ python main.py
 
 This starts the robot with five simulated sensors (light, temperature, distance, pressure, and humidity), runs the controller, and opens the MQTT Message Viewer. The robot and controller connect to the configured broker during startup.
 
+The controller uses both light and humidity on a 0–10 scale. It samples neighbouring positions, favours lower light and higher humidity, and returns to the best measured position. It stops moving when light is at most 2 and humidity is at least 7, while continuing to monitor for changes. These thresholds and the sampling period can be configured in `Controller(...)` in `main.py`.
+
+Simulated light and humidity depend on the robot's position, with a dark, humid region centred on `(6, 4)`. The controller does not know that location; it searches using sensor readings. Other sensors retain their generated values. Movement uses `MOVE TO X,Y` messages on `Robot/controller/Move`. The controller assumes the robot starts at `(0, 0)` and executes each command; it does not receive position acknowledgements, so avoid sending competing movement commands during a search. Local searching can settle at a local optimum in other environments and does not guarantee finding a global optimum.
+
 In the viewer, click **Connect** to connect its own MQTT client. Subscribe to `#` to view all messages under the project's topic prefix, or enter a specific topic. The viewer adds the prefix automatically.
 
 Press **Ctrl+C** in the terminal to stop the controller and shut down the robot, then close the viewer window if it is still open.

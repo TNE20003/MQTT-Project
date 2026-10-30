@@ -23,6 +23,7 @@ class Sensor:
     def __init__(self, sensor_name:str, interface:SensorInterfaceType, frequency_hz:float, sigma: int = None, mu:int = None):
         self.sensor_name =sensor_name
         self.sensor_interface = interface
+        self.position_provider = None
 
         self.sigma = randrange(1, int(monotonic()+1000), 1) if sigma is None else sigma
         self.mu = randrange(self.sigma, self.sigma+1000000, 1) if mu is None else mu
@@ -38,6 +39,13 @@ class Sensor:
 
     def _value_generator(self, running_period:float, shutdown_sensor_event:Event, MQTT_Service:MQTTServer, Pub_topic:str):
             def _generate_value(time:float):
+                if self.position_provider is not None and self.sensor_name in ("light_sensor", "humidity_sensor"):
+                    x, y = self.position_provider()
+                    # A shared dark, humid region gives movement a measurable effect.
+                    distance = math.hypot(x - 6, y - 4)
+                    if self.sensor_name == "light_sensor":
+                        return min(10.0, 0.5 + distance)
+                    return max(0.0, 9.5 - distance)
                 return (1 / (self.sigma * math.sqrt(2 * math.pi))) * math.exp(
                     -0.5 * ((time - self.mu) / self.sigma) ** 2) * running_period**2 + randrange(0,10)
 
